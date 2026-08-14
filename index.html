@@ -177,6 +177,39 @@
       align-items:end;
       gap:12px;
     }
+    /* Colorful side buttons */
+.side-btn{
+  width:100%;
+  border:none;
+  color:#fff;
+  padding:14px;
+  margin-bottom:12px;
+  border-radius:16px;
+  font-weight:700;
+  text-align:left;
+  cursor:pointer;
+  font-size:16px;
+  transition:.2s;
+  box-shadow:0 4px 10px rgba(0,0,0,.12);
+}
+
+.side-btn:hover{
+  transform:translateY(-2px) scale(1.02);
+}
+
+/* Subject colors */
+.subject1{background:#ef476f;}
+.subject2{background:#2563eb;}
+.subject3{background:#16a34a;}
+.subject4{background:#7c3aed;}
+.subject5{background:#f59e0b;}
+
+/* Class colors */
+.class1{background:#ef476f;}
+.class2{background:#f59e0b;}
+.class3{background:#16a34a;}
+.class4{background:#2563eb;}
+.class5{background:#7c3aed;}
     .hero-kid{
       text-align:center;
     }
@@ -590,146 +623,36 @@
   </header>
 <section class="selection-layout">
 
-  <div class="side-panel">
-    <h2>📚 Subjects</h2>
-    <button class="side-btn">🔢 Basic Maths</button>
-    <button class="side-btn">🔤 English</button>
-    <button class="side-btn">🌱 EVS</button>
-    <button class="side-btn">अ Hindi</button>
-    <button class="side-btn">📘 Hindi Grammar</button>
-  </div>
+<div class="side-panel subjects-panel">
+  <h2>📚 Subjects</h2>
+
+  <button class="side-btn subject1" onclick="alert('Basic Maths selected')">🔢 Basic Maths</button>
+
+<button class="side-btn subject2" onclick="alert('English selected')">🔤 English</button>
+
+<button class="side-btn subject3" onclick="alert('EVS selected')">🌱 EVS</button>
+
+<button class="side-btn subject4" onclick="alert('Hindi selected')">अ Hindi</button>
+
+<button class="side-btn subject5" onclick="alert('Hindi Grammar selected')">📘 Hindi Grammar</button>
+<div class="side-panel classes-panel">
+  <h2>🎒 Classes</h2>
+
+  <button class="side-btn class1">1️⃣ Class 1</button>
+  <button class="side-btn class2">2️⃣ Class 2</button>
+  <button class="side-btn class3">3️⃣ Class 3</button>
+  <button class="side-btn class4">4️⃣ Class 4</button>
+  <button class="side-btn class5">5️⃣ Class 5</button>
+</div>
 
   <div class="center-banner">
     <img src="juniorcircle-banner.png" alt="Banner" class="main-banner">
   </div>
 
-  <div class="side-panel">
-    <h2>🎒 Classes</h2>
-    <button class="side-btn">1️⃣ Class 1</button>
-    <button class="side-btn">2️⃣ Class 2</button>
-    <button class="side-btn">3️⃣ Class 3</button>
-    <button class="side-btn">4️⃣ Class 4</button>
-    <button class="side-btn">5️⃣ Class 5</button>
-  </div>
 
 </section>
-  <section class="hero">
-    <img src="juniorcircle-banner.png" alt="JuniorCircle Banner" class="banner-img">
-    <div class="hero-inner">
-      
-      <div class="hero-kid">
-        <img src="https://static.vecteezy.com/system/resources/previews/024/044/108/original/cute-boy-kid-reading-book-cartoon-png.png" alt="Boy">
-      </div>
+  
 
-      <div class="hero-center">
-        <div class="hero-title">Junior Circle</div>
-        <div class="hero-tag">Learn • Practice • Grow</div>
-        <div class="hero-text">
-          Printable &amp; Downloadable Worksheets,<br>
-          Study Material &amp; Learning Resources<br>
-          for Nursery to Class 5
-        </div>
-      </div>
-
-      <div class="hero-kid">
-        <img src="https://static.vecteezy.com/system/resources/previews/024/044/130/original/cute-girl-kid-holding-book-cartoon-png.png" alt="Girl">
-      </div>
-    </div>
-
-    <div class="hero-features">
-      <div class="hero-feature">
-        <div class="icon">🖨️</div>
-        <h4>Printable</h4>
-        <p>High quality worksheets</p>
-      </div>
-      <div class="hero-feature">
-        <div class="icon">⬇️</div>
-        <h4>Download</h4>
-        <p>Instant access anytime</p>
-      </div>
-      <div class="hero-feature">
-        <div class="icon">🛡️</div>
-        <h4>Trusted</h4>
-        <p>Safe &amp; child friendly</p>
-      </div>
-      <div class="hero-feature">
-        <div class="icon">⭐</div>
-        <h4>Affordable</h4>
-        <p>Best price for learning</p>
-      </div>
-    </div>
-  </section>
-
-  <section class="selection">
-
-<div class="panel subjects" id="subjects">
-  <h2>📚 Choose Subject</h2>
-
-  <button class="subject-card" onclick="alert('Basic Maths selected')">
-    <div class="subject-icon s1">123</div>
-    <div>
-      <h3>Basic Maths</h3>
-      <p>Numbers, addition, subtraction, multiplication, division &amp; patterns</p>
-    </div>
-  </button>
-
-  <button class="subject-card" onclick="alert('English Language selected')">
-    <div class="subject-icon s2">ABC</div>
-    <div>
-      <h3>English Language</h3>
-      <p>Reading, phonics, grammar, vocabulary &amp; writing practice</p>
-    </div>
-  </button>
-
-  <button class="subject-card" onclick="alert('EVS selected')">
-    <div class="subject-icon s3">🌱</div>
-    <div>
-      <h3>EVS (Environmental Studies)</h3>
-      <p>Plants, animals, body parts, food, transport &amp; environment</p>
-    </div>
-  </button>
-
-  <button class="subject-card" onclick="alert('Hindi selected')">
-    <div class="subject-icon s4">अ</div>
-    <div>
-      <h3>Hindi</h3>
-      <p>अक्षर ज्ञान, शब्द, वाक्य, पढ़ना और लिखना</p>
-    </div>
-  </button>
-
-  <button class="subject-card" onclick="alert('Basic Hindi Grammar selected')">
-    <div class="subject-icon s5">📘</div>
-    <div>
-      <h3>Basic Hindi Grammar</h3>
-      <p>संज्ञा, सर्वनाम, लिंग, वचन, वर्णमाला और मात्राएँ</p>
-    </div>
-  </button>
-
-</div>
-    <div class="panel classes" id="classes">
-      <h2>🎒 Choose Class</h2>
-
-      <button class="class-btn" onclick="alert('Class 1 selected')">
-  <div class="class-num c1">1</div>Class 1
-</button>
-
-<button class="class-btn" onclick="alert('Class 2 selected')">
-  <div class="class-num c2">2</div>Class 2
-</button>
-
-<button class="class-btn" onclick="alert('Class 3 selected')">
-  <div class="class-num c3">3</div>Class 3
-</button>
-
-<button class="class-btn" onclick="alert('Class 4 selected')">
-  <div class="class-num c4">4</div>Class 4
-</button>
-
-<button class="class-btn" onclick="alert('Class 5 selected')">
-  <div class="class-num c5">5</div>Class 5
-</button>
-    </div>
-  </section>
 
   <section class="featured-wrap" id="featured">
     <div class="offer">
