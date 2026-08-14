@@ -112,6 +112,59 @@
       padding:26px 16px 10px;
       box-shadow:0 12px 28px rgba(0,0,0,.08);
     }
+    .selection-layout{
+  max-width:1200px;
+  margin:20px auto;
+  display:grid;
+  grid-template-columns:220px 1fr 220px;
+  gap:20px;
+  align-items:start;
+  padding:0 15px;
+}
+
+.side-panel{
+  background:#fff;
+  border-radius:20px;
+  padding:18px;
+  box-shadow:0 6px 18px rgba(0,0,0,.08);
+}
+
+.side-panel h2{
+  background:#ff4f81;
+  color:#fff;
+  text-align:center;
+  padding:12px;
+  border-radius:14px;
+  margin-bottom:15px;
+}
+
+.side-btn{
+  width:100%;
+  border:none;
+  background:#f8fafc;
+  padding:14px;
+  margin-bottom:12px;
+  border-radius:14px;
+  font-weight:700;
+  text-align:left;
+}
+
+.center-banner{
+  background:#fff;
+  border-radius:24px;
+  padding:12px;
+}
+
+.main-banner{
+  width:100%;
+  border-radius:20px;
+}
+
+@media(max-width:900px){
+  .selection-layout{
+    grid-template-columns:1fr;
+  }
+}
     .banner-img{
   width:100%;
   display:block;
@@ -535,7 +588,31 @@
       <button>🔍</button>
     </div>
   </header>
+<section class="selection-layout">
 
+  <div class="side-panel">
+    <h2>📚 Subjects</h2>
+    <button class="side-btn">🔢 Basic Maths</button>
+    <button class="side-btn">🔤 English</button>
+    <button class="side-btn">🌱 EVS</button>
+    <button class="side-btn">अ Hindi</button>
+    <button class="side-btn">📘 Hindi Grammar</button>
+  </div>
+
+  <div class="center-banner">
+    <img src="juniorcircle-banner.png" alt="Banner" class="main-banner">
+  </div>
+
+  <div class="side-panel">
+    <h2>🎒 Classes</h2>
+    <button class="side-btn">1️⃣ Class 1</button>
+    <button class="side-btn">2️⃣ Class 2</button>
+    <button class="side-btn">3️⃣ Class 3</button>
+    <button class="side-btn">4️⃣ Class 4</button>
+    <button class="side-btn">5️⃣ Class 5</button>
+  </div>
+
+</section>
   <section class="hero">
     <img src="juniorcircle-banner.png" alt="JuniorCircle Banner" class="banner-img">
     <div class="hero-inner">
