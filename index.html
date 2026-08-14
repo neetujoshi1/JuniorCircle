@@ -115,11 +115,27 @@
     .selection-layout{
   max-width:1200px;
   margin:20px auto;
-  display:grid;
-  grid-template-columns:220px 1fr 220px;
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
   gap:20px;
-  align-items:start;
   padding:0 15px;
+  flex-wrap:nowrap;
+}
+
+.subjects-panel{
+  width:220px;
+  flex-shrink:0;
+}
+
+.center-banner{
+  flex:1;
+  max-width:700px;
+}
+
+.classes-panel{
+  width:220px;
+  flex-shrink:0;
 }
 
 .side-panel{
