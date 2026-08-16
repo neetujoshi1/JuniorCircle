@@ -619,7 +619,10 @@
     .cart-total{font-size:20px;font-weight:800;text-align:right;margin:14px 0}
     .buy{border:0;cursor:pointer;padding:9px 13px;border-radius:10px;background:#ff4f81;color:#fff;font-weight:700}
     .user-status{font-size:12px;color:#555;text-align:center;margin-top:6px}
-  </style>
+  
+    .worksheet-preview{user-select:none;-webkit-user-drag:none;}
+    #previewModal{z-index:9999;}
+</style>
 </head>
 <body>
 
@@ -774,118 +777,139 @@
 let selectedClass = null;
 let selectedSubject = null;
 
-// AUTOMATIC WORKSHEET LOADER
-// Upload a worksheet to the same GitHub folder using this filename format:
-// class1-maths-addition.png
-// class2-english-language.png
-// class3-evs-plants.pdf
+// AUTOMATIC WORKSHEET LOADER — old design, no filename renaming needed
+// Put files in: worksheets/class1/maths/, worksheets/class2/english/, etc.
+// The filename itself can be ANYTHING.
 const GITHUB_OWNER = 'neetujoshi1';
 const GITHUB_REPO = 'JuniorCircle';
 const GITHUB_BRANCH = 'main';
 
-function subjectLabel(slug){
-  const map = {
-    maths: 'Maths',
-    math: 'Maths',
-    english: 'English',
-    evs: 'EVS',
-    hindi: 'Hindi',
-    'hindi-grammar': 'Hindi Grammar'
-  };
-  return map[slug.toLowerCase()] || slug.replace(/-/g,' ').replace(/\b\w/g,m=>m.toUpperCase());
+const SUBJECT_FOLDERS = {
+  'Maths': 'maths',
+  'English': 'english',
+  'EVS': 'evs',
+  'Hindi': 'hindi',
+  'Hindi Grammar': 'hindi-grammar'
+};
+
+function prettyWorksheetName(name){
+  return name.replace(/\.(png|jpe?g|webp|pdf)$/i,'')
+    .replace(/[_-]+/g,' ')
+    .replace(/\b\w/g,c=>c.toUpperCase());
 }
 
-function worksheetTitle(subject, topic, cls){
-  const pretty = topic ? topic.replace(/-/g,' ').replace(/\b\w/g,m=>m.toUpperCase()) : 'Worksheet';
-  return `Class ${cls} ${pretty}`;
-}
+function createWorksheetCard(file, cls, subject){
+  const card=document.createElement('div');
+  card.className='card worksheet-card';
+  card.dataset.class=String(cls);
+  card.dataset.subject=subject;
+  card.dataset.fileUrl=file.download_url || '';
+  card.dataset.originalPath=file.path || '';
 
-function createWorksheetCard(file){
-  const match = file.name.match(/^class(\d+)-([a-z0-9-]+?)(?:-([a-z0-9-]+))?\.(png|jpe?g|webp|pdf)$/i);
-  if(!match) return null;
+  const isPdf=/\.pdf$/i.test(file.name);
+  const title=prettyWorksheetName(file.name);
 
-  const cls = match[1];
-  const subjectSlug = match[2];
-  const topic = match[3] || '';
-  const subject = subjectLabel(subjectSlug);
-  const url = file.download_url || `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${GITHUB_BRANCH}/${encodeURIComponent(file.name)}`;
+  // Preview only. No public PDF/image download button is shown.
+  const media=isPdf
+    ? `<div class="worksheet-preview" style="height:210px;display:flex;align-items:center;justify-content:center;background:#fff7df;font-size:58px;cursor:pointer" onclick="openWorksheetPreview(this.closest('.worksheet-card'))">📄</div>`
+    : `<img class="worksheet-preview" src="${file.download_url}" alt="${title}" draggable="false" style="width:100%;height:210px;object-fit:cover;cursor:pointer" onclick="openWorksheetPreview(this.closest('.worksheet-card'))">`;
 
-  const card = document.createElement('div');
-  card.className = 'card worksheet-card';
-  card.dataset.class = cls;
-  card.dataset.subject = subject;
-
-  const media = file.name.toLowerCase().endsWith('.pdf')
-    ? `<div style="height:210px;display:flex;align-items:center;justify-content:center;background:#fef3c7;font-size:55px">📄</div>`
-    : `<img src="${url}" alt="${worksheetTitle(subject, topic, cls)}" style="width:100%;height:210px;object-fit:cover">`;
-
-  card.innerHTML = `${media}
+  card.innerHTML=`${media}
     <div class="card-body">
       <span class="badge">Class ${cls} • ${subject}</span>
-      <h4>${worksheetTitle(subject, topic, cls)}</h4>
-      <p>Printable worksheet for Class ${cls}.</p>
-      <div class="price-row"><span class="price">₹30</span><button class="buy" onclick="addToCart(this)">🛒 Add to Cart</button></div>
+      <h4>${title}</h4>
+      <p>Preview only • Buy to get the worksheet.</p>
+      <div class="price-row"><span class="price">₹30</span><button class="buy" onclick="addToCart(this)">🛒 Buy Now</button></div>
     </div>`;
-  card.dataset.fileUrl = url;
   return card;
 }
 
+async function getGitHubFolder(path){
+  const api=`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${path}?ref=${GITHUB_BRANCH}`;
+  const response=await fetch(api,{cache:'no-store'});
+  if(!response.ok) return [];
+  const data=await response.json();
+  return Array.isArray(data)?data:[];
+}
+
 async function loadWorksheets(){
-  const container = document.getElementById('worksheetCards');
-  const empty = document.getElementById('emptyMessage');
-  container.querySelectorAll('.worksheet-card').forEach(c => c.remove());
+  const container=document.getElementById('worksheetCards');
+  const empty=document.getElementById('emptyMessage');
+  container.querySelectorAll('.worksheet-card').forEach(c=>c.remove());
+  let count=0;
 
-  try {
-    const api = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/?ref=${GITHUB_BRANCH}`;
-    const response = await fetch(api, {cache:'no-store'});
-    if(!response.ok) throw new Error('GitHub files could not be loaded');
-    const files = await response.json();
-
-    let count = 0;
-    files.filter(f => f.type === 'file').forEach(file => {
-      const card = createWorksheetCard(file);
-      if(card){
-        container.insertBefore(card, empty);
-        count++;
+  try{
+    for(let cls=1; cls<=5; cls++){
+      for(const [subject,folder] of Object.entries(SUBJECT_FOLDERS)){
+        const files=await getGitHubFolder(`worksheets/class${cls}/${folder}`);
+        files.filter(f=>f.type==='file' && /\.(png|jpe?g|webp|pdf)$/i.test(f.name))
+          .forEach(file=>{
+            container.insertBefore(createWorksheetCard(file,cls,subject),empty);
+            count++;
+          });
       }
-    });
-
-    empty.textContent = count ? 'No worksheet matches the selected Class and Subject.' : 'Upload a worksheet to GitHub using the format class1-maths-addition.png';
+    }
+    empty.textContent=count ? 'No worksheet matches the selected Class and Subject.' : 'Upload worksheets into the Class → Subject folders.';
     filterWorksheets();
-  } catch(error){
+  }catch(error){
     console.error(error);
-    empty.textContent = 'Worksheets could not be loaded right now. Please refresh the page.';
-    empty.style.display = 'block';
+    empty.textContent='Worksheets could not be loaded right now. Please refresh the page.';
+    empty.style.display='block';
   }
 }
 
 function filterWorksheets(){
-  const cards = document.querySelectorAll('.worksheet-card');
-  let shown = 0;
-  cards.forEach(card => {
-    const matchClass = selectedClass === null || card.dataset.class === String(selectedClass);
-    const matchSubject = selectedSubject === null || card.dataset.subject === selectedSubject;
-    const show = matchClass && matchSubject;
-    card.style.display = show ? 'flex' : 'none';
+  const cards=document.querySelectorAll('.worksheet-card');
+  let shown=0;
+  cards.forEach(card=>{
+    const okClass=selectedClass===null || card.dataset.class===String(selectedClass);
+    const okSubject=selectedSubject===null || card.dataset.subject===selectedSubject;
+    const show=okClass && okSubject;
+    card.style.display=show?'flex':'none';
     if(show) shown++;
   });
-  document.getElementById('emptyMessage').style.display = shown ? 'none' : 'block';
+  document.getElementById('emptyMessage').style.display=shown?'none':'block';
 }
 
-function selectClass(cls, button){
-  selectedClass = cls;
-  document.querySelectorAll('.classes-panel .side-btn').forEach(b => b.style.outline='none');
+function selectClass(cls,button){
+  selectedClass=cls;
+  document.querySelectorAll('.classes-panel .side-btn').forEach(b=>b.style.outline='none');
   button.style.outline='4px solid #fde047';
   filterWorksheets();
   document.getElementById('featured').scrollIntoView({behavior:'smooth'});
 }
 
-function selectSubject(subject, button){
-  selectedSubject = subject;
-  document.querySelectorAll('.subjects-panel .side-btn').forEach(b => b.style.outline='none');
+function selectSubject(subject,button){
+  selectedSubject=subject;
+  document.querySelectorAll('.subjects-panel .side-btn').forEach(b=>b.style.outline='none');
   button.style.outline='4px solid #fde047';
   filterWorksheets();
   document.getElementById('featured').scrollIntoView({behavior:'smooth'});
+}
+
+function openWorksheetPreview(card){
+  const url=card.dataset.fileUrl;
+  if(!url) return;
+  const title=card.querySelector('h4')?.textContent || 'Worksheet Preview';
+  const isPdf=/\.pdf$/i.test(url);
+  let modal=document.getElementById('previewModal');
+  if(!modal){
+    modal=document.createElement('div');
+    modal.id='previewModal';
+    modal.className='modal show';
+    modal.innerHTML=`<div class="modal-box" style="max-width:900px"><button class="modal-close" onclick="closeWorksheetPreview()">×</button><h2 id="previewTitle"></h2><div id="previewContent"></div><p style="text-align:center;color:#777;margin-top:10px">🔒 Preview only — buy the worksheet to receive the full file.</p></div>`;
+    document.body.appendChild(modal);
+  }
+  modal.classList.add('show');
+  document.getElementById('previewTitle').textContent=title;
+  document.getElementById('previewContent').innerHTML=isPdf
+    ? `<div style="height:520px;display:flex;align-items:center;justify-content:center;background:#fff7df;border-radius:14px;font-size:90px">📄<span style="font-size:18px;margin-left:15px">PDF Preview</span></div>`
+    : `<img src="${url}" alt="Preview" draggable="false" style="display:block;max-width:100%;max-height:65vh;margin:auto;border-radius:12px;user-select:none;-webkit-user-drag:none">`;
+}
+
+function closeWorksheetPreview(){
+  const m=document.getElementById('previewModal');
+  if(m) m.classList.remove('show');
 }
 
 const UPI_ID = 'neetukala2009@okicici';
