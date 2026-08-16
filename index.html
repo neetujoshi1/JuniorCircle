@@ -639,11 +639,11 @@
   <aside class="side-panel subjects-panel">
     <h2>📚 Subjects</h2>
 
-    <button class="side-btn subject1" onclick="alert('Basic Maths selected')">🔢 Basic Maths</button>
-    <button class="side-btn subject2" onclick="alert('English selected')">🔤 English</button>
-    <button class="side-btn subject3" onclick="alert('EVS selected')">🌱 EVS</button>
-    <button class="side-btn subject4" onclick="alert('Hindi selected')">अ Hindi</button>
-    <button class="side-btn subject5" onclick="alert('Hindi Grammar selected')">📘 Hindi Grammar</button>
+    <button class="side-btn subject1" onclick="selectSubject('Maths', this)">🔢 Basic Maths</button>
+    <button class="side-btn subject2" onclick="selectSubject('English', this)">🔤 English</button>
+    <button class="side-btn subject3" onclick="selectSubject('EVS', this)">🌱 EVS</button>
+    <button class="side-btn subject4" onclick="selectSubject('Hindi', this)">अ Hindi</button>
+    <button class="side-btn subject5" onclick="selectSubject('Hindi Grammar', this)">📘 Hindi Grammar</button>
   </aside>
 
   <div class="center-banner">
@@ -653,11 +653,11 @@
   <aside class="side-panel classes-panel">
     <h2>🎒 Classes</h2>
 
-    <button class="side-btn class1" onclick="alert('Class 1 selected')">1️⃣ Class 1</button>
-    <button class="side-btn class2" onclick="alert('Class 2 selected')">2️⃣ Class 2</button>
-    <button class="side-btn class3" onclick="alert('Class 3 selected')">3️⃣ Class 3</button>
-    <button class="side-btn class4" onclick="alert('Class 4 selected')">4️⃣ Class 4</button>
-    <button class="side-btn class5" onclick="alert('Class 5 selected')">5️⃣ Class 5</button>
+    <button class="side-btn class1" onclick="selectClass(1, this)">1️⃣ Class 1</button>
+    <button class="side-btn class2" onclick="selectClass(2, this)">2️⃣ Class 2</button>
+    <button class="side-btn class3" onclick="selectClass(3, this)">3️⃣ Class 3</button>
+    <button class="side-btn class4" onclick="selectClass(4, this)">4️⃣ Class 4</button>
+    <button class="side-btn class5" onclick="selectClass(5, this)">5️⃣ Class 5</button>
   </aside>
 
 </section>
@@ -676,75 +676,28 @@
         <a href="#">View All →</a>
       </div>
 
-      <div class="cards">
-        <div class="card">
-          <img src="https://images.unsplash.com/photo-1516979187457-637abb4f9353?q=80&amp;w=600&amp;auto=format&amp;fit=crop" alt="Alphabet Worksheet">
+      <div class="cards" id="worksheetCards">
+        <div class="card worksheet-card" data-class="1" data-subject="Maths">
+          <img src="class1-maths-addition.png" alt="Class 1 Maths Addition Worksheet">
           <div class="card-body">
-            <span class="badge">Nursery</span>
-            <h4>Alphabet A to Z</h4>
-            <p>Letter tracing and recognition worksheet.</p>
-            <div class="price-row">
-              <span class="price">₹30</span>
-              <button class="buy">🛒</button>
-            </div>
+            <span class="badge">Class 1 • Maths</span>
+            <h4>Class 1 Addition</h4>
+            <p>Colourful addition practice worksheet.</p>
+            <div class="price-row"><span class="price">₹30</span><button class="buy" onclick="previewWorksheet(this)">👀 View</button></div>
           </div>
         </div>
 
-        <div class="card">
-          <img src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&amp;w=600&amp;auto=format&amp;fit=crop" alt="Numbers Worksheet">
+        <div class="card worksheet-card" data-class="2" data-subject="English">
+          <img src="class2-english-language.png" alt="Class 2 English Language Worksheet">
           <div class="card-body">
-            <span class="badge">LKG / UKG</span>
-            <h4>Numbers 1 to 10</h4>
-            <p>Counting and number writing practice.</p>
-            <div class="price-row">
-              <span class="price">₹30</span>
-              <button class="buy">🛒</button>
-            </div>
+            <span class="badge">Class 2 • English</span>
+            <h4>English Language Worksheet</h4>
+            <p>Language practice worksheet for Class 2.</p>
+            <div class="price-row"><span class="price">₹30</span><button class="buy" onclick="previewWorksheet(this)">👀 View</button></div>
           </div>
         </div>
 
-        <div class="card">
-          <img src="https://images.unsplash.com/photo-1513258496099-48168024aec0?q=80&amp;w=600&amp;auto=format&amp;fit=crop" alt="Addition Worksheet">
-          <div class="card-body">
-            <span class="badge">Class 1</span>
-            <h4>Addition Within 10</h4>
-            <p>Simple addition sums for beginners.</p>
-            <div class="price-row">
-              <span class="price">₹30</span>
-              <button class="buy">🛒</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <img src="https://images.unsplash.com/photo-1518133835878-5a93cc3f89e5?q=80&amp;w=600&amp;auto=format&amp;fit=crop" alt="Multiplication Worksheet">
-          <div class="card-body">
-            <span class="badge">Class 3</span>
-            <h4>Multiplication Table</h4>
-            <p>Practice tables with fun activities.</p>
-            <div class="price-row">
-              <span class="price">₹30</span>
-              <button class="buy">🛒</button>
-            </div>
-          </div>
-          <div class="card">
-  <img src="https://images.unsplash.com/photo-1513258496099-48168024aec0?q=80&w=600&auto=format&fit=crop" alt="Class 1 Addition Worksheet">
-
-  <div class="card-body">
-    <span class="badge">Class 1</span>
-
-    <h4>Addition Worksheet</h4>
-
-    <p>Practice addition sums for Class 1 students.</p>
-
-    <div class="price-row">
-      <span class="price">Free</span>
-
-      <a href="class1-addition.pdf" download class="buy">⬇ Download</a>
-    </div>
-  </div>
-</div>
-        </div>
+        <div id="emptyMessage" style="display:none;grid-column:1/-1;text-align:center;padding:35px;font-weight:600;color:#666;">Select a class and subject to see available worksheets.</div>
       </div>
     </div>
   </section>
@@ -774,5 +727,47 @@
     © 2026 JuniorCircle | Printable &amp; Downloadable Worksheets for Nursery to Class 5
   </footer>
 
+
+<script>
+let selectedClass = null;
+let selectedSubject = null;
+
+function filterWorksheets(){
+  const cards = document.querySelectorAll('.worksheet-card');
+  let shown = 0;
+  cards.forEach(card => {
+    const matchClass = selectedClass === null || card.dataset.class === String(selectedClass);
+    const matchSubject = selectedSubject === null || card.dataset.subject === selectedSubject;
+    const show = matchClass && matchSubject;
+    card.style.display = show ? 'flex' : 'none';
+    if(show) shown++;
+  });
+  document.getElementById('emptyMessage').style.display = shown ? 'none' : 'block';
+}
+
+function selectClass(cls, button){
+  selectedClass = cls;
+  document.querySelectorAll('.classes-panel .side-btn').forEach(b => b.style.outline='none');
+  button.style.outline='4px solid #fde047';
+  filterWorksheets();
+  document.getElementById('featured').scrollIntoView({behavior:'smooth'});
+}
+
+function selectSubject(subject, button){
+  selectedSubject = subject;
+  document.querySelectorAll('.subjects-panel .side-btn').forEach(b => b.style.outline='none');
+  button.style.outline='4px solid #fde047';
+  filterWorksheets();
+  document.getElementById('featured').scrollIntoView({behavior:'smooth'});
+}
+
+function previewWorksheet(button){
+  const card = button.closest('.card');
+  const image = card.querySelector('img').src;
+  window.open(image, '_blank');
+}
+
+filterWorksheets();
+</script>
 </body>
 </html>
