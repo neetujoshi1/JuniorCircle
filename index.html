@@ -604,6 +604,21 @@
       .cards{grid-template-columns:1fr}
       .search-bar{flex-direction:column}
     }
+
+    /* LOGIN + CART */
+    .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;padding:20px}
+    .modal.show{display:flex}
+    .modal-box{background:#fff;width:min(430px,100%);border-radius:24px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.25);position:relative}
+    .modal-box h2{margin-bottom:14px;color:#7c3aed}
+    .modal-box input{width:100%;padding:12px;margin:7px 0;border:2px solid #eadcff;border-radius:12px}
+    .modal-close{position:absolute;right:15px;top:10px;border:0;background:none;font-size:24px;cursor:pointer}
+    .modal-action{width:100%;border:0;padding:13px;border-radius:13px;background:#7c3aed;color:#fff;font-weight:700;cursor:pointer;margin-top:8px}
+    .cart-list{max-height:300px;overflow:auto;margin:12px 0}
+    .cart-item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px;border-bottom:1px solid #eee}
+    .remove-item{border:0;background:#fee2e2;color:#b91c1c;border-radius:8px;padding:6px 9px;cursor:pointer}
+    .cart-total{font-size:20px;font-weight:800;text-align:right;margin:14px 0}
+    .buy{border:0;cursor:pointer;padding:9px 13px;border-radius:10px;background:#ff4f81;color:#fff;font-weight:700}
+    .user-status{font-size:12px;color:#555;text-align:center;margin-top:6px}
   </style>
 </head>
 <body>
@@ -623,8 +638,8 @@
       </div>
 
       <div class="actions">
-        <a class="btn login" href="#login">👤 Login</a>
-        <a class="btn cart" href="#cart">🛒 Cart (0)</a>
+        <button class="btn login" type="button" onclick="openLogin()">👤 Login</button>
+        <button class="btn cart" type="button" onclick="openCart()">🛒 Cart (<span id="cartCount">0</span>)</button>
       </div>
     </nav>
 
@@ -683,7 +698,7 @@
             <span class="badge">Class 1 • Maths</span>
             <h4>Class 1 Addition</h4>
             <p>Colourful addition practice worksheet.</p>
-            <div class="price-row"><span class="price">₹30</span><button class="buy" onclick="previewWorksheet(this)">👀 View</button></div>
+            <div class="price-row"><span class="price">₹30</span><button class="buy" onclick="addToCart(this)">🛒 Add to Cart</button></div>
           </div>
         </div>
 
@@ -693,7 +708,7 @@
             <span class="badge">Class 2 • English</span>
             <h4>English Language Worksheet</h4>
             <p>Language practice worksheet for Class 2.</p>
-            <div class="price-row"><span class="price">₹30</span><button class="buy" onclick="previewWorksheet(this)">👀 View</button></div>
+            <div class="price-row"><span class="price">₹30</span><button class="buy" onclick="addToCart(this)">🛒 Add to Cart</button></div>
           </div>
         </div>
 
@@ -727,6 +742,33 @@
     © 2026 JuniorCircle | Printable &amp; Downloadable Worksheets for Nursery to Class 5
   </footer>
 
+
+
+  <!-- Login Modal -->
+  <div class="modal" id="loginModal" onclick="if(event.target===this) closeLogin()">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeLogin()">×</button>
+      <h2>👤 JuniorCircle Login</h2>
+      <p>Login on this device to continue to checkout.</p>
+      <input id="loginName" type="text" placeholder="Parent / Student name">
+      <input id="loginEmail" type="email" placeholder="Email address">
+      <input id="loginPassword" type="password" placeholder="Password">
+      <button class="modal-action" onclick="doLogin()">Login / Create Account</button>
+      <div class="user-status" id="loginStatus"></div>
+    </div>
+  </div>
+
+  <!-- Cart Modal -->
+  <div class="modal" id="cartModal" onclick="if(event.target===this) closeCart()">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeCart()">×</button>
+      <h2>🛒 Your Cart</h2>
+      <div class="cart-list" id="cartList"></div>
+      <div class="cart-total" id="cartTotal">Total: ₹0</div>
+      <button class="modal-action" onclick="checkoutUPI()">💳 Checkout & Pay via UPI</button>
+      <div class="user-status">UPI ID: neetukala2009@okicici</div>
+    </div>
+  </div>
 
 <script>
 let selectedClass = null;
@@ -782,7 +824,7 @@ function createWorksheetCard(file){
       <span class="badge">Class ${cls} • ${subject}</span>
       <h4>${worksheetTitle(subject, topic, cls)}</h4>
       <p>Printable worksheet for Class ${cls}.</p>
-      <div class="price-row"><span class="price">₹30</span><button class="buy" onclick="previewWorksheet(this)">👀 View</button></div>
+      <div class="price-row"><span class="price">₹30</span><button class="buy" onclick="addToCart(this)">🛒 Add to Cart</button></div>
     </div>`;
   card.dataset.fileUrl = url;
   return card;
@@ -846,12 +888,60 @@ function selectSubject(subject, button){
   document.getElementById('featured').scrollIntoView({behavior:'smooth'});
 }
 
-function previewWorksheet(button){
-  const card = button.closest('.card');
-  const url = card.dataset.fileUrl || card.querySelector('img')?.src;
-  if(url) window.open(url, '_blank');
+const UPI_ID = 'neetukala2009@okicici';
+const UPI_NAME = 'JuniorCircle';
+let cart = JSON.parse(localStorage.getItem('juniorCircleCart') || '[]');
+
+function openLogin(){ document.getElementById('loginModal').classList.add('show'); updateLoginStatus(); }
+function closeLogin(){ document.getElementById('loginModal').classList.remove('show'); }
+function updateLoginStatus(){
+  const u=JSON.parse(localStorage.getItem('juniorCircleUser')||'null');
+  document.getElementById('loginStatus').textContent=u ? `Logged in as ${u.name} (${u.email})` : '';
+}
+function doLogin(){
+  const name=document.getElementById('loginName').value.trim();
+  const email=document.getElementById('loginEmail').value.trim();
+  const password=document.getElementById('loginPassword').value;
+  if(!name || !email || !password){ alert('Please enter name, email and password.'); return; }
+  localStorage.setItem('juniorCircleUser', JSON.stringify({name,email}));
+  alert('Login successful!');
+  closeLogin();
 }
 
+function saveCart(){ localStorage.setItem('juniorCircleCart', JSON.stringify(cart)); updateCartCount(); }
+function updateCartCount(){ document.getElementById('cartCount').textContent=cart.reduce((s,x)=>s+x.qty,0); }
+function addToCart(button){
+  const card=button.closest('.worksheet-card');
+  const title=card.querySelector('h4').textContent;
+  const price=parseInt((card.querySelector('.price')?.textContent||'₹30').replace(/[^0-9]/g,''))||30;
+  const url=card.dataset.fileUrl || card.querySelector('img')?.src || '';
+  const existing=cart.find(x=>x.title===title);
+  if(existing) existing.qty++; else cart.push({title,price,url,qty:1});
+  saveCart();
+  alert('Added to cart!');
+  openCart();
+}
+function openCart(){ renderCart(); document.getElementById('cartModal').classList.add('show'); }
+function closeCart(){ document.getElementById('cartModal').classList.remove('show'); }
+function removeFromCart(i){ cart.splice(i,1); saveCart(); renderCart(); }
+function renderCart(){
+  const list=document.getElementById('cartList');
+  if(!cart.length){ list.innerHTML='<p style="text-align:center;padding:20px">Your cart is empty.</p>'; document.getElementById('cartTotal').textContent='Total: ₹0'; return; }
+  list.innerHTML=cart.map((x,i)=>`<div class="cart-item"><span>${x.title} × ${x.qty}<br><small>₹${x.price*x.qty}</small></span><button class="remove-item" onclick="removeFromCart(${i})">Remove</button></div>`).join('');
+  const total=cart.reduce((s,x)=>s+x.price*x.qty,0);
+  document.getElementById('cartTotal').textContent='Total: ₹'+total;
+}
+function checkoutUPI(){
+  if(!cart.length){ alert('Your cart is empty.'); return; }
+  const user=JSON.parse(localStorage.getItem('juniorCircleUser')||'null');
+  if(!user){ closeCart(); openLogin(); alert('Please login before checkout.'); return; }
+  const total=cart.reduce((s,x)=>s+x.price*x.qty,0);
+  const note='JuniorCircle Worksheets';
+  const upi=`upi://pay?pa=${encodeURIComponent(UPI_ID)}&pn=${encodeURIComponent(UPI_NAME)}&am=${total.toFixed(2)}&cu=INR&tn=${encodeURIComponent(note)}`;
+  window.location.href=upi;
+}
+
+updateCartCount();
 loadWorksheets();
 </script>
 </body>
