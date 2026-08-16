@@ -732,6 +732,91 @@
 let selectedClass = null;
 let selectedSubject = null;
 
+// AUTOMATIC WORKSHEET LOADER
+// Upload a worksheet to the same GitHub folder using this filename format:
+// class1-maths-addition.png
+// class2-english-language.png
+// class3-evs-plants.pdf
+const GITHUB_OWNER = 'neetujoshi1';
+const GITHUB_REPO = 'artsparkstudio';
+const GITHUB_BRANCH = 'main';
+
+function subjectLabel(slug){
+  const map = {
+    maths: 'Maths',
+    math: 'Maths',
+    english: 'English',
+    evs: 'EVS',
+    hindi: 'Hindi',
+    'hindi-grammar': 'Hindi Grammar'
+  };
+  return map[slug.toLowerCase()] || slug.replace(/-/g,' ').replace(/\b\w/g,m=>m.toUpperCase());
+}
+
+function worksheetTitle(subject, topic, cls){
+  const pretty = topic ? topic.replace(/-/g,' ').replace(/\b\w/g,m=>m.toUpperCase()) : 'Worksheet';
+  return `Class ${cls} ${pretty}`;
+}
+
+function createWorksheetCard(file){
+  const match = file.name.match(/^class(\d+)-([a-z0-9-]+?)(?:-([a-z0-9-]+))?\.(png|jpe?g|webp|pdf)$/i);
+  if(!match) return null;
+
+  const cls = match[1];
+  const subjectSlug = match[2];
+  const topic = match[3] || '';
+  const subject = subjectLabel(subjectSlug);
+  const url = file.download_url || `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${GITHUB_BRANCH}/${encodeURIComponent(file.name)}`;
+
+  const card = document.createElement('div');
+  card.className = 'card worksheet-card';
+  card.dataset.class = cls;
+  card.dataset.subject = subject;
+
+  const media = file.name.toLowerCase().endsWith('.pdf')
+    ? `<div style="height:210px;display:flex;align-items:center;justify-content:center;background:#fef3c7;font-size:55px">📄</div>`
+    : `<img src="${url}" alt="${worksheetTitle(subject, topic, cls)}" style="width:100%;height:210px;object-fit:cover">`;
+
+  card.innerHTML = `${media}
+    <div class="card-body">
+      <span class="badge">Class ${cls} • ${subject}</span>
+      <h4>${worksheetTitle(subject, topic, cls)}</h4>
+      <p>Printable worksheet for Class ${cls}.</p>
+      <div class="price-row"><span class="price">₹30</span><button class="buy" onclick="previewWorksheet(this)">👀 View</button></div>
+    </div>`;
+  card.dataset.fileUrl = url;
+  return card;
+}
+
+async function loadWorksheets(){
+  const container = document.getElementById('worksheetCards');
+  const empty = document.getElementById('emptyMessage');
+  container.querySelectorAll('.worksheet-card').forEach(c => c.remove());
+
+  try {
+    const api = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/?ref=${GITHUB_BRANCH}`;
+    const response = await fetch(api, {cache:'no-store'});
+    if(!response.ok) throw new Error('GitHub files could not be loaded');
+    const files = await response.json();
+
+    let count = 0;
+    files.filter(f => f.type === 'file').forEach(file => {
+      const card = createWorksheetCard(file);
+      if(card){
+        container.insertBefore(card, empty);
+        count++;
+      }
+    });
+
+    empty.textContent = count ? 'No worksheet matches the selected Class and Subject.' : 'Upload a worksheet to GitHub using the format class1-maths-addition.png';
+    filterWorksheets();
+  } catch(error){
+    console.error(error);
+    empty.textContent = 'Worksheets could not be loaded right now. Please refresh the page.';
+    empty.style.display = 'block';
+  }
+}
+
 function filterWorksheets(){
   const cards = document.querySelectorAll('.worksheet-card');
   let shown = 0;
@@ -763,11 +848,11 @@ function selectSubject(subject, button){
 
 function previewWorksheet(button){
   const card = button.closest('.card');
-  const image = card.querySelector('img').src;
-  window.open(image, '_blank');
+  const url = card.dataset.fileUrl || card.querySelector('img')?.src;
+  if(url) window.open(url, '_blank');
 }
 
-filterWorksheets();
+loadWorksheets();
 </script>
 </body>
 </html>
