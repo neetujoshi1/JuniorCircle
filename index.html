@@ -913,43 +913,89 @@ async function loadWorksheets(){
   }
 }
 
+async function getAllGitHubWorksheets(){
+
+  const api =
+    `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/git/trees/${GITHUB_BRANCH}?recursive=1`;
+
+  const response = await fetch(api, {cache:'no-store'});
+
+  if(!response.ok){
+    throw new Error('GitHub folders could not be loaded');
+  }
+
+  const data = await response.json();
+
+  if(!data.tree){
+    throw new Error('No GitHub files found');
+  }
+
+  return data.tree
+    .filter(file =>
+      file.type === 'blob' &&
+      /\.(png|jpe?g|webp|pdf)$/i.test(file.path)
+    )
+    .map(file => ({
+      name: file.path.split('/').pop(),
+      path: file.path,
+      download_url:
+        `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${GITHUB_BRANCH}/${file.path}`
+    }));
+}
+
 async function loadWorksheets(){
 
-  const container=document.getElementById('worksheetCards');
-  const empty=document.getElementById('emptyMessage');
+  const container = document.getElementById('worksheetCards');
+  const empty = document.getElementById('emptyMessage');
 
   container
     .querySelectorAll('.worksheet-card')
-    .forEach(c=>c.remove());
+    .forEach(c => c.remove());
 
-  let count=0;
+  try {
 
-  try{
+    const files = await getAllGitHubWorksheets();
 
-    const files=await getAllGitHubWorksheets();
+    let count = 0;
 
-    files.forEach(file=>{
+    files.forEach(file => {
 
-      const parts=file.path.split('/');
+      const parts = file.path.split('/');
 
-      const clsMatch =
-        parts[1].match(/^class([1-5])$/i);
+      const clsMatch = parts.find(part =>
+        /^class([1-5])$/i.test(part)
+      );
 
       if(!clsMatch) return;
 
-      const folder =
-        (parts[2] || '').toLowerCase();
+      const classNumber =
+        clsMatch.match(/^class([1-5])$/i)[1];
+
+      const subjectFolder =
+        parts[parts.indexOf(clsMatch) + 1];
+
+      if(!subjectFolder) return;
+
+      const subjectKey =
+        subjectFolder.toLowerCase();
 
       const subject =
-        SUBJECT_FOLDERS[folder];
+        SUBJECT_FOLDERS[subjectKey];
 
       if(!subject) return;
 
-      const cls =
-        parseInt(clsMatch[1],10);
+      const worksheet = {
+        name: file.name,
+        path: file.path,
+        download_url: file.download_url
+      };
 
       container.insertBefore(
-        createWorksheetCard(file,cls,subject),
+        createWorksheetCard(
+          worksheet,
+          parseInt(classNumber,10),
+          subject
+        ),
         empty
       );
 
@@ -958,21 +1004,20 @@ async function loadWorksheets(){
 
     empty.textContent = count
       ? 'No worksheet matches the selected Class and Subject.'
-      : 'No worksheets found in the worksheets/Class/Subject folders.';
+      : 'No worksheets uploaded yet.';
 
     filterWorksheets();
 
-  }catch(error){
+  } catch(error) {
 
     console.error(error);
 
     empty.textContent =
       'Worksheets could not be loaded right now. Please refresh the page.';
 
-    empty.style.display='block';
+    empty.style.display = 'block';
   }
 }
-
 
 function filterWorksheets(){
   const cards=document.querySelectorAll('.worksheet-card');
