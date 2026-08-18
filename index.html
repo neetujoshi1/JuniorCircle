@@ -867,21 +867,25 @@ async function loadWorksheets(){
       .forEach(file => {
 
         let name = file.name.toLowerCase();
+let cls = null;
 
-        let cls = 1;
+if(/class1/i.test(name)) cls = 1;
+else if(/class2/i.test(name)) cls = 2;
+else if(/class3/i.test(name)) cls = 3;
+else if(/class4/i.test(name)) cls = 4;
+else if(/class5/i.test(name)) cls = 5;
 
-        if(name.includes('class2')) cls = 2;
-        else if(name.includes('class3')) cls = 3;
-        else if(name.includes('class4')) cls = 4;
-        else if(name.includes('class5')) cls = 5;
+let subject = 'Maths';
 
-        let subject = 'Maths';
+if(/english/i.test(name)) subject = 'English';
+else if(/evs/i.test(name)) subject = 'EVS';
+else if(/hindi-grammar/i.test(name)) subject = 'Hindi Grammar';
+else if(/hindi/i.test(name)) subject = 'Hindi';
+else if(/maths|math|addition|subtraction|multiplication|division/i.test(name))
+  subject = 'Maths';
 
-        if(name.includes('english')) subject = 'English';
-        else if(name.includes('evs')) subject = 'EVS';
-        else if(name.includes('hindi-grammar')) subject = 'Hindi Grammar';
-        else if(name.includes('hindi')) subject = 'Hindi';
-
+if(cls === null) return;
+        
         const worksheet = {
           name: file.name,
           path: file.path,
