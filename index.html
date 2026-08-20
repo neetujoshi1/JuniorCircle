@@ -794,23 +794,17 @@
   </div>
 
 <script>
+<script>
 let selectedClass = null;
 let selectedSubject = null;
 
 // AUTOMATIC WORKSHEET LOADER
-// Filename kuch bhi ho sakta hai — rename karne ki zarurat nahi.
+// Upload worksheet files to the GitHub repository without changing their names.
+// The website scans the whole repository, including folders.
 
 const GITHUB_OWNER = 'neetujoshi1';
 const GITHUB_REPO = 'JuniorCircle';
 const GITHUB_BRANCH = 'main';
-
-const SUBJECT_FOLDERS = {
-  'maths': 'Maths',
-  'english': 'English',
-  'evs': 'EVS',
-  'hindi': 'Hindi',
-  'hindi-grammar': 'Hindi Grammar'
-};
 
 function prettyWorksheetName(name){
   return name.replace(/\.(png|jpe?g|webp|pdf)$/i,'')
@@ -818,11 +812,26 @@ function prettyWorksheetName(name){
     .replace(/\b\w/g,c=>c.toUpperCase());
 }
 
+function detectClass(pathOrName){
+  const s = String(pathOrName).toLowerCase();
+  const m = s.match(/(?:class|grade|std)[\s_-]*([1-5])\b/i);
+  return m ? Number(m[1]) : null;
+}
+
+function detectSubject(pathOrName){
+  const s = String(pathOrName).toLowerCase();
+  if(/hindi[\s_-]*grammar/.test(s)) return 'Hindi Grammar';
+  if(/english/.test(s)) return 'English';
+  if(/evs|environment|environmental/.test(s)) return 'EVS';
+  if(/hindi/.test(s)) return 'Hindi';
+  if(/maths?|addition|subtraction|multiplication|division|numbers?/.test(s)) return 'Maths';
+  return 'Other';
+}
+
 function createWorksheetCard(file, cls, subject){
   const card=document.createElement('div');
-
   card.className='card worksheet-card';
-  card.dataset.class=String(cls);
+  card.dataset.class=cls === null ? 'all' : String(cls);
   card.dataset.subject=subject;
   card.dataset.fileUrl=file.download_url || '';
   card.dataset.originalPath=file.path || '';
@@ -839,135 +848,92 @@ function createWorksheetCard(file, cls, subject){
         alt="${title}"
         draggable="false"
         style="width:100%;height:210px;object-fit:cover;cursor:pointer"
-        onclick="openWorksheetPreview(this.closest('.worksheet-card'))">`;
+        onclick="openWorksheetPreview(this.closest('.worksheet-card'))"
+        onerror="this.onerror=null;this.src='data:image/svg+xml;charset=UTF-8,'+encodeURIComponent('<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;600&quot; height=&quot;400&quot;><rect width=&quot;100%&quot; height=&quot;100%&quot; fill=&quot;#fff7fb&quot;/><text x=&quot;50%&quot; y=&quot;48%&quot; text-anchor=&quot;middle&quot; font-size=&quot;28&quot; fill=&quot;#777&quot;>Worksheet</text><text x=&quot;50%&quot; y=&quot;58%&quot; text-anchor=&quot;middle&quot; font-size=&quot;18&quot; fill=&quot;#999&quot;>Preview unavailable</text></svg>')">`;
 
   card.innerHTML=`${media}
     <div class="card-body">
-      <span class="badge">Class ${cls} • ${subject}</span>
+      <span class="badge">Class ${cls ?? '—'} • ${subject}</span>
       <h4>${title}</h4>
-      <p>Preview only • Buy to get the worksheet.</p>
-
+      <p>Printable worksheet.</p>
       <div class="price-row">
         <span class="price">₹30</span>
-        <button class="buy" onclick="addToCart(this)">
-          🛒 Buy Now
-        </button>
+        <button class="buy" onclick="addToCart(this)">🛒 Buy Now</button>
       </div>
     </div>`;
-
   return card;
 }
+
+async function getAllGitHubFiles(){
+  // Git Trees API returns files from the complete repository, including subfolders.
+  const api=`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/git/trees/${GITHUB_BRANCH}?recursive=1`;
+  const response=await fetch(api,{cache:'no-store'});
+  if(!response.ok) throw new Error('GitHub files could not be loaded');
+  const data=await response.json();
+  if(!data.tree) throw new Error('GitHub repository tree not available');
+
+  return data.tree
+    .filter(x=>x.type==='blob' && /\.(png|jpe?g|webp|pdf)$/i.test(x.path))
+    .map(x=>{
+      const encodedPath=x.path.split('/').map(encodeURIComponent).join('/');
+      return {
+        name:x.path.split('/').pop(),
+        path:x.path,
+        download_url:`https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${GITHUB_BRANCH}/${encodedPath}`
+      };
+    });
+}
+
 async function loadWorksheets(){
+  const container=document.getElementById('worksheetCards');
+  const empty=document.getElementById('emptyMessage');
+  if(!container) return;
 
-  const container = document.getElementById('worksheetCards');
-  const empty = document.getElementById('emptyMessage');
+  container.querySelectorAll('.worksheet-card').forEach(c=>c.remove());
 
-  container.querySelectorAll('.worksheet-card').forEach(c => c.remove());
+  try{
+    const files=await getAllGitHubFiles();
+    let count=0;
 
-  try {
+    files.forEach(file=>{
+      const cls=detectClass(file.path);
+      const subject=detectSubject(file.path);
 
-    const api =
-      `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/?ref=${GITHUB_BRANCH}`;
+      // Every image/PDF is shown automatically.
+      container.insertBefore(createWorksheetCard(file,cls,subject),empty);
+      count++;
+    });
 
-    const response = await fetch(api, {cache:'no-store'});
-
-    if(!response.ok){
-      throw new Error('GitHub files could not be loaded');
-    }
-
-    const files = await response.json();
-
-    let count = 0;
-
-    files
-      .filter(file =>
-        file.type === 'file' &&
-        /\.(png|jpe?g|webp|pdf)$/i.test(file.name)
-      )
-      .forEach(file => {
-
-        let name = file.name.toLowerCase();
-let cls = null;
-
-if(/class1/i.test(name)) cls = 1;
-else if(/class2/i.test(name)) cls = 2;
-else if(/class3/i.test(name)) cls = 3;
-else if(/class4/i.test(name)) cls = 4;
-else if(/class5/i.test(name)) cls = 5;
-
-let subject = 'Maths';
-
-if(/english/i.test(name)) subject = 'English';
-else if(/evs/i.test(name)) subject = 'EVS';
-else if(/hindi-grammar/i.test(name)) subject = 'Hindi Grammar';
-else if(/hindi/i.test(name)) subject = 'Hindi';
-else if(/maths|math|addition|subtraction|multiplication|division/i.test(name))
-  subject = 'Maths';
-
-if(cls === null) return;
-        
-        const worksheet = {
-          name: file.name,
-          path: file.path,
-          download_url: file.download_url
-        };
-
-        container.insertBefore(
-          createWorksheetCard(worksheet, cls, subject),
-          empty
-        );
-
-        count++;
-      });
-
-    empty.textContent = count
+    empty.textContent=count
       ? 'No worksheet matches the selected Class and Subject.'
       : 'No worksheets uploaded yet.';
 
     filterWorksheets();
-
-  } catch(error) {
-
+  }catch(error){
     console.error(error);
-
-    empty.textContent =
-      'Worksheets could not be loaded right now. Please refresh the page.';
-
-    empty.style.display = 'block';
-  }
-}
-
-
-
-    filterWorksheets();
-
-  } catch(error) {
-
-    console.error(error);
-
-    empty.textContent =
-      'Worksheets could not be loaded right now. Please refresh the page.';
-
-    empty.style.display = 'block';
+    empty.textContent='Worksheets could not be loaded right now. Please refresh the page.';
+    empty.style.display='block';
   }
 }
 
 function filterWorksheets(){
   const cards=document.querySelectorAll('.worksheet-card');
   let shown=0;
+
   cards.forEach(card=>{
-   const okClass =
-  selectedClass === null ||
-  card.dataset.class === String(selectedClass);
+    const okClass=selectedClass===null ||
+      card.dataset.class===String(selectedClass) ||
+      card.dataset.class==='all';
 
-const okSubject =
-  selectedSubject === null ||
-  card.dataset.subject === selectedSubject;
+    const okSubject=selectedSubject===null ||
+      card.dataset.subject===selectedSubject ||
+      card.dataset.subject==='Other';
 
-const show = okClass && okSubject;
+    const show=okClass && okSubject;
     card.style.display=show?'flex':'none';
     if(show) shown++;
   });
+
   document.getElementById('emptyMessage').style.display=shown?'none':'block';
 }
 
@@ -993,17 +959,24 @@ function openWorksheetPreview(card){
   const title=card.querySelector('h4')?.textContent || 'Worksheet Preview';
   const isPdf=/\.pdf$/i.test(url);
   let modal=document.getElementById('previewModal');
+
   if(!modal){
     modal=document.createElement('div');
     modal.id='previewModal';
     modal.className='modal show';
-    modal.innerHTML=`<div class="modal-box" style="max-width:900px"><button class="modal-close" onclick="closeWorksheetPreview()">×</button><h2 id="previewTitle"></h2><div id="previewContent"></div><p style="text-align:center;color:#777;margin-top:10px">🔒 Preview only — buy the worksheet to receive the full file.</p></div>`;
+    modal.innerHTML=`<div class="modal-box" style="max-width:900px">
+      <button class="modal-close" onclick="closeWorksheetPreview()">×</button>
+      <h2 id="previewTitle"></h2>
+      <div id="previewContent"></div>
+      <p style="text-align:center;color:#777;margin-top:10px">🔒 Preview only — buy the worksheet to receive the full file.</p>
+    </div>`;
     document.body.appendChild(modal);
   }
+
   modal.classList.add('show');
   document.getElementById('previewTitle').textContent=title;
   document.getElementById('previewContent').innerHTML=isPdf
-    ? `<div style="height:520px;display:flex;align-items:center;justify-content:center;background:#fff7df;border-radius:14px;font-size:90px">📄<span style="font-size:18px;margin-left:15px">PDF Preview</span></div>`
+    ? `<iframe src="${url}" style="width:100%;height:520px;border:0;border-radius:14px"></iframe>`
     : `<img src="${url}" alt="Preview" draggable="false" style="display:block;max-width:100%;max-height:65vh;margin:auto;border-radius:12px;user-select:none;-webkit-user-drag:none">`;
 }
 
@@ -1012,53 +985,56 @@ function closeWorksheetPreview(){
   if(m) m.classList.remove('show');
 }
 
-const UPI_ID = 'neetukala2009@okicici';
-const UPI_NAME = 'JuniorCircle';
-let cart = JSON.parse(localStorage.getItem('juniorCircleCart') || '[]');
+const UPI_ID='neetukala2009@okicici';
+const UPI_NAME='JuniorCircle';
+let cart=JSON.parse(localStorage.getItem('juniorCircleCart')||'[]');
 
-function openLogin(){ document.getElementById('loginModal').classList.add('show'); updateLoginStatus(); }
-function closeLogin(){ document.getElementById('loginModal').classList.remove('show'); }
+function openLogin(){document.getElementById('loginModal').classList.add('show');updateLoginStatus();}
+function closeLogin(){document.getElementById('loginModal').classList.remove('show');}
 function updateLoginStatus(){
   const u=JSON.parse(localStorage.getItem('juniorCircleUser')||'null');
-  document.getElementById('loginStatus').textContent=u ? `Logged in as ${u.name} (${u.email})` : '';
+  document.getElementById('loginStatus').textContent=u?`Logged in as ${u.name} (${u.email})`:'';
 }
 function doLogin(){
   const name=document.getElementById('loginName').value.trim();
   const email=document.getElementById('loginEmail').value.trim();
   const password=document.getElementById('loginPassword').value;
-  if(!name || !email || !password){ alert('Please enter name, email and password.'); return; }
-  localStorage.setItem('juniorCircleUser', JSON.stringify({name,email}));
+  if(!name||!email||!password){alert('Please enter name, email and password.');return;}
+  localStorage.setItem('juniorCircleUser',JSON.stringify({name,email}));
   alert('Login successful!');
   closeLogin();
 }
-
-function saveCart(){ localStorage.setItem('juniorCircleCart', JSON.stringify(cart)); updateCartCount(); }
-function updateCartCount(){ document.getElementById('cartCount').textContent=cart.reduce((s,x)=>s+x.qty,0); }
+function saveCart(){localStorage.setItem('juniorCircleCart',JSON.stringify(cart));updateCartCount();}
+function updateCartCount(){document.getElementById('cartCount').textContent=cart.reduce((s,x)=>s+x.qty,0);}
 function addToCart(button){
   const card=button.closest('.worksheet-card');
   const title=card.querySelector('h4').textContent;
   const price=parseInt((card.querySelector('.price')?.textContent||'₹30').replace(/[^0-9]/g,''))||30;
-  const url=card.dataset.fileUrl || card.querySelector('img')?.src || '';
+  const url=card.dataset.fileUrl||card.querySelector('img')?.src||'';
   const existing=cart.find(x=>x.title===title);
   if(existing) existing.qty++; else cart.push({title,price,url,qty:1});
   saveCart();
   alert('Added to cart!');
   openCart();
 }
-function openCart(){ renderCart(); document.getElementById('cartModal').classList.add('show'); }
-function closeCart(){ document.getElementById('cartModal').classList.remove('show'); }
-function removeFromCart(i){ cart.splice(i,1); saveCart(); renderCart(); }
+function openCart(){renderCart();document.getElementById('cartModal').classList.add('show');}
+function closeCart(){document.getElementById('cartModal').classList.remove('show');}
+function removeFromCart(i){cart.splice(i,1);saveCart();renderCart();}
 function renderCart(){
   const list=document.getElementById('cartList');
-  if(!cart.length){ list.innerHTML='<p style="text-align:center;padding:20px">Your cart is empty.</p>'; document.getElementById('cartTotal').textContent='Total: ₹0'; return; }
+  if(!cart.length){
+    list.innerHTML='<p style="text-align:center;padding:20px">Your cart is empty.</p>';
+    document.getElementById('cartTotal').textContent='Total: ₹0';
+    return;
+  }
   list.innerHTML=cart.map((x,i)=>`<div class="cart-item"><span>${x.title} × ${x.qty}<br><small>₹${x.price*x.qty}</small></span><button class="remove-item" onclick="removeFromCart(${i})">Remove</button></div>`).join('');
   const total=cart.reduce((s,x)=>s+x.price*x.qty,0);
   document.getElementById('cartTotal').textContent='Total: ₹'+total;
 }
 function checkoutUPI(){
-  if(!cart.length){ alert('Your cart is empty.'); return; }
+  if(!cart.length){alert('Your cart is empty.');return;}
   const user=JSON.parse(localStorage.getItem('juniorCircleUser')||'null');
-  if(!user){ closeCart(); openLogin(); alert('Please login before checkout.'); return; }
+  if(!user){closeCart();openLogin();alert('Please login before checkout.');return;}
   const total=cart.reduce((s,x)=>s+x.price*x.qty,0);
   const note='JuniorCircle Worksheets';
   const upi=`upi://pay?pa=${encodeURIComponent(UPI_ID)}&pn=${encodeURIComponent(UPI_NAME)}&am=${total.toFixed(2)}&cu=INR&tn=${encodeURIComponent(note)}`;
