@@ -872,7 +872,11 @@ async function getAllGitHubFiles(){
   if(!data.tree) throw new Error('GitHub repository tree not available');
 
   return data.tree
-    .filter(x=>x.type==='blob' && /\.(png|jpe?g|webp|pdf)$/i.test(x.path))
+    .filter(x =>
+  x.type === 'blob' &&
+  /\.(png|jpg|jpeg|webp|pdf)$/i.test(x.path) &&
+  !/(^|\/)(logo|banner|hero|header|favicon)([-_.].*)?\.(png|jpg|jpeg|webp)$/i.test(x.path)
+)
     .map(x=>{
       const encodedPath=x.path.split('/').map(encodeURIComponent).join('/');
       return {
